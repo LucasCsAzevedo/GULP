@@ -1,29 +1,35 @@
-const gulp = require('gulp')
+const {series} = require('gulp')
 const concat = require('gulp-concat')
 const cssmin = require('gulp-cssmin')
 const rename = require('gulp-rename')
 const uglify = require('gulp-uglify')
 const image = require('gulp-image')
+const stripJS = require('gulp-strip-comments')
+const stripCSS = require('gulp-strip-css-comments')
+const htmlmin = require('gulp-htmlmin')
 
 function tarefasCSS(cb) {
 
-    return gulp.src([
+    gulp.src([
         './node_modules/bootstrap/dist/css/bootstrap.css',
         './vendor/owl/css/owl.css',
         './node_modules/@fortawesome/fontawesome-free/css/fontawesome.css',
         './vendor/jquery-ui/jquery-ui.css',
         './src/css/style.css'
     ]) /* ** é qualquer valor */
+        .pipe(stripCss())
         .pipe(concat('style.css'))
         .pipe(cssmin())
         .pipe(rename({ suffix: '.min'})) //libs.min.css
         .pipe(gulp.dest('./dist/css'))
 
+        cb()
+
 }
 
-function tarefasJS() {
+function tarefasJS(callback) {
 
-    return gulp.src([
+    gulp.src([
         './node_modules/jquery/dist/jquery.js',
         './node_modules/bootstrap/dist/js/bootstrap.js',
         './vendor/owl/js/owl.js',
@@ -31,11 +37,13 @@ function tarefasJS() {
         './vendor/jquery-ui/jquery-ui.js',
         './src/js/custom.js'
     ])
+        .pipe(stripJS())
         .pipe(concat('scripts.js'))
         .pipe(uglify())
         .pipe(rename({ suffix: '.min'})) //libs.min.js
         .pipe(gulp.dest('./dist/js'))
 
+    return callback()
 }
 
 function tarefasImagem(){
@@ -55,6 +63,20 @@ function tarefasImagem(){
         .pipe(gulp.dest('./dist/images'))
 }
 
+// POC - Proof of Concept
+function tarefasHTML(callback){
+
+    gulp.src('./src/**/*.html')
+        .pipe(htmlmin({ collapseWhitespace: true}))
+        .pipe(gulp.dest('./dist'))
+
+    return callback()
+
+}
+
+
 exports.styles = tarefasCSS
 exports.scripts = tarefasJS
 exports.images = tarefasImagem
+
+exports.default = parallel(tarefasHTML, tarefasJS, tarefasCSS)
